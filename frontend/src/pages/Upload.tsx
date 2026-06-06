@@ -13,7 +13,16 @@ export function Upload() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+
+      if (!validTypes.includes(selectedFile.type) && !['csv', 'xls', 'xlsx'].includes(fileExt || '')) {
+        setError('Invalid file type. Please upload a CSV or Excel file.');
+        return;
+      }
+
+      setFile(selectedFile);
       setError(null);
       setSuccess(null);
     }
@@ -26,7 +35,16 @@ export function Upload() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+      const selectedFile = e.dataTransfer.files[0];
+      const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+
+      if (!validTypes.includes(selectedFile.type) && !['csv', 'xls', 'xlsx'].includes(fileExt || '')) {
+        setError('Invalid file type. Please upload a CSV or Excel file.');
+        return;
+      }
+
+      setFile(selectedFile);
       setError(null);
       setSuccess(null);
     }
@@ -42,7 +60,7 @@ export function Upload() {
     formData.append('file', file);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/upload', formData, {
+      const response = await axios.post(import.meta.env.VITE_API_URL + '/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -60,11 +78,19 @@ export function Upload() {
       <h1 className="text-2xl font-bold tracking-tight">Upload Dataset</h1>
 
       <div
-        className="mt-6 flex justify-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-20 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+        className="mt-6 flex justify-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-20 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 rounded-xl backdrop-blur-sm">
+             <div className="flex flex-col items-center">
+                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-2"></div>
+                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Uploading and processing...</p>
+             </div>
+          </div>
+        )}
         <div className="text-center">
           <UploadIcon className="mx-auto h-12 w-12 text-slate-400" aria-hidden="true" />
           <div className="mt-4 flex text-sm leading-6 text-slate-600 dark:text-slate-400 justify-center">
@@ -86,7 +112,7 @@ export function Upload() {
         </div>
       </div>
 
-      {file && (
+      {file && !loading && !success && (
         <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <File className="h-6 w-6 text-blue-500" />
@@ -100,7 +126,7 @@ export function Upload() {
             disabled={loading}
             className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Uploading...' : 'Process Dataset'}
+            Process Dataset
           </button>
         </div>
       )}
@@ -120,10 +146,10 @@ export function Upload() {
                <span className="font-medium">File successfully processed!</span>
             </div>
             <button
-              onClick={() => navigate('/analytics')}
+              onClick={() => navigate('/')}
               className="flex items-center gap-1 text-sm font-medium bg-green-100 dark:bg-green-800 px-3 py-1.5 rounded-md hover:bg-green-200 dark:hover:bg-green-700 transition-colors"
             >
-              Analyze <Play className="h-4 w-4" />
+              Go to Dashboard <Play className="h-4 w-4" />
             </button>
           </div>
 
@@ -153,7 +179,7 @@ export function Upload() {
                     <tr key={i} className="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                       {success.summary.column_names.map((col: string, j: number) => (
                         <td key={j} className="px-6 py-4 whitespace-nowrap max-w-[200px] truncate">
-                          {String(row[col])}
+                          {row[col] === null ? 'null' : String(row[col])}
                         </td>
                       ))}
                     </tr>
