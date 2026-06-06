@@ -16,7 +16,7 @@ export function Analytics() {
     const fetchAnalysis = async () => {
       try {
         // Re-using the analyze endpoint to get chart data for the Analytics page
-        const response = await axios.get('http://localhost:8000/api/analyze');
+        const response = await axios.get(import.meta.env.VITE_API_URL + '/api/analyze');
         setData(response.data);
       } catch (error) {
         console.error('Error fetching analytics data:', error);
